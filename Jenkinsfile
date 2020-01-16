@@ -21,7 +21,8 @@ pipeline {
   agent { label 'linux && immutable' }
   environment {
     REPO = 'its-gitbase'
-    BASE_DIR = "src/github.com/v1v/${env.REPO}"
+    OWNER = 'v1v'
+    BASE_DIR = "src/github.com/${OWNER}/${env.REPO}"
     NOTIFY_TO = credentials('notify-to')
     JOB_GCS_BUCKET = credentials('gcs-bucket')
     JOB_GIT_CREDENTIALS = "f6c7695a-671e-4f4f-a331-acdce44ff9ba"
@@ -44,9 +45,9 @@ pipeline {
       steps {
         // full custom checkout
         test(basedir: "${BASE_DIR}",
-          mergeTarget: "git_base_commit",
+          mergeTarget: "master",
           branch: "${branch}",
-          repo: "git@github.com:elastic/${env.REPO}.git",
+          repo: "git@github.com:${OWNER}/${env.REPO}.git",
           credentialsId: "${JOB_GIT_CREDENTIALS}",
           githubNotifyFirstTimeContributor: false,
           reference: "/var/lib/jenkins/${env.REPO}.git")
@@ -61,7 +62,7 @@ pipeline {
 
 def getRealCommit(repo, ref){
   def refReplace = ref.replace("/", ".")
-  def gitCmd = "git ls-remote -q https://\${GIT_USERNAME}:\${GIT_PASSWORD}@github.com/v1v/${repo}.git ${ref}|sed 's/${refReplace}//'"
+  def gitCmd = "git ls-remote -q https://\${GIT_USERNAME}:\${GIT_PASSWORD}@github.com/${OWNER}/${repo}.git ${ref}|sed 's/${refReplace}//'"
   withCredentials([
     usernamePassword(
       credentialsId: "2a9602aa-ab9f-4e52-baf3-b71ca88469c7-UserAndToken",
