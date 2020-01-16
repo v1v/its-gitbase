@@ -20,8 +20,8 @@
 pipeline {
   agent { label 'linux && immutable' }
   environment {
-    REPO = 'apm-pipeline-library'
-    BASE_DIR = "src/github.com/elastic/${env.REPO}"
+    REPO = 'its-gitbase'
+    BASE_DIR = "src/github.com/v1v/${env.REPO}"
     NOTIFY_TO = credentials('notify-to')
     JOB_GCS_BUCKET = credentials('gcs-bucket')
     JOB_GIT_CREDENTIALS = "f6c7695a-671e-4f4f-a331-acdce44ff9ba"
@@ -61,7 +61,7 @@ pipeline {
 
 def getRealCommit(repo, ref){
   def refReplace = ref.replace("/", ".")
-  def gitCmd = "git ls-remote -q https://\${GIT_USERNAME}:\${GIT_PASSWORD}@github.com/elastic/${repo}.git ${ref}|sed 's/${refReplace}//'"
+  def gitCmd = "git ls-remote -q https://\${GIT_USERNAME}:\${GIT_PASSWORD}@github.com/v1v/${repo}.git ${ref}|sed 's/${refReplace}//'"
   withCredentials([
     usernamePassword(
       credentialsId: "2a9602aa-ab9f-4e52-baf3-b71ca88469c7-UserAndToken",
