@@ -87,6 +87,9 @@ def getRef(){
   if(env.CHANGE_ID){
     ref = "refs/pull/${env.CHANGE_ID}/head"
   }
+  if(env.TAG_NAME) {
+    ref = "refs/tags/${env.BRANCH_NAME}"
+  }
   return ref
 }
 
