@@ -38,12 +38,10 @@ pipeline {
     rateLimitBuilds(throttle: [count: 60, durationName: 'hour', userBoost: true])
     quietPeriod(10)
   }
-  stages
-  {
-    stage('Test') {
+  stages {
+    stage('Test Full Custom Checkout') {
       options { skipDefaultCheckout() }
       steps {
-        // full custom checkout
         test(basedir: "${BASE_DIR}",
           mergeTarget: "master",
           branch: "${branch}",
@@ -51,9 +49,17 @@ pipeline {
           credentialsId: "${JOB_GIT_CREDENTIALS}",
           githubNotifyFirstTimeContributor: false,
           reference: "/var/lib/jenkins/${env.REPO}.git")
-        // checkout scm
+      }
+    }
+    stage('Checkout scm') {
+      options { skipDefaultCheckout() }
+      steps {
         test(basedir: "${BASE_DIR}")
-        // checkout scm with extensions
+      }
+    }
+    stage('Checkout scm with extensions') {
+      options { skipDefaultCheckout() }
+      steps {
         test(basedir: "${BASE_DIR}", reference: "/var/lib/jenkins/${env.REPO}.git")
       }
     }
