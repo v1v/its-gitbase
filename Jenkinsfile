@@ -48,7 +48,8 @@ pipeline {
           repo: "git@github.com:${OWNER}/${env.REPO}.git",
           credentialsId: "${JOB_GIT_CREDENTIALS}",
           githubNotifyFirstTimeContributor: false,
-          reference: "/var/lib/jenkins/${env.REPO}.git")
+          reference: "/var/lib/jenkins/${env.REPO}.git"
+        )
       }
     }
     stage('Checkout scm') {
