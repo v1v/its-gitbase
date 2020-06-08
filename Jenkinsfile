@@ -116,7 +116,9 @@ def test(checkoutParams){
 
     gitResetEnvVariables()
     gitCheckout(checkoutParams)
-
+    dir(checkoutParams.basedir) {
+      printDebug()
+    }
     if (env.TAG_NAME?.trim()) {
       log(level: 'WARN', text: 'GIT_BASE_COMMIT does not support TAGS')
       assertGitBaseCommit(env.GIT_SHA)
@@ -135,9 +137,14 @@ def assertGitBaseCommit(commit) {
 }
 
 def gitResetEnvVariables() {
-  // In order to run different test scenarios is required to reset the
+  // In order to run different test scenarios is required to reset the 
   // env variables that are generated on the fly.
   env.GIT_BASE_COMMIT=''
   env.GIT_BUILD_CAUSE=''
   env.GIT_SHA=''
+}
+
+def printDebug() {
+  sh(label: 'Git env variables', script: 'env | sort | grep -i GIT_')
+  sh(label: 'git rev-parse HEAD', script: 'git rev-parse HEAD')
 }
