@@ -86,6 +86,9 @@ def getBranch(){
   if(env.CHANGE_ID){
     branch = "pr/${env.CHANGE_ID}"
   }
+  if(env.TAG_NAME?.trim()) {
+    branch = "${env.TAG_NAME}"
+  }
   return branch
 }
 
@@ -94,8 +97,8 @@ def getRef(){
   if(env.CHANGE_ID){
     ref = "refs/pull/${env.CHANGE_ID}/head"
   }
-  if(env.TAG_NAME) {
-    ref = "refs/tags/${env.BRANCH_NAME}"
+  if(env.TAG_NAME?.trim()) {
+    ref = "refs/tags/${env.TAG_NAME}"
   }
   return ref
 }
@@ -110,9 +113,31 @@ def test(checkoutParams){
   ws(branch){
     String commit = getRealCommit(env.REPO, ref)
     log(level: "INFO", text: "commit: ${commit}")
+
+    gitResetEnvVariables()
     gitCheckout(checkoutParams)
-    if(!GIT_BASE_COMMIT.trim().equalsIgnoreCase(commit.trim())){
-      error("GIT_BASE_COMMIT value is wrong expected '${commit}' but found '${env.GIT_BASE_COMMIT}'")
+
+    if (env.TAG_NAME?.trim()) {
+      log(level: 'WARN', text: 'GIT_BASE_COMMIT does not support TAGS')
+      assertGitBaseCommit(env.GIT_SHA)
+    } else {
+      assertGitBaseCommit(commit)
     }
   }
+}
+
+def assertGitBaseCommit(commit) {
+  if(env.GIT_BASE_COMMIT.trim().equalsIgnoreCase(commit.trim())){
+    log(level: 'INFO', text: "GIT_BASE_COMMIT value is wrong expected '${commit}' but found '${env.GIT_BASE_COMMIT}'")
+  } else {
+    error("GIT_BASE_COMMIT value is wrong expected '${commit}' but found '${env.GIT_BASE_COMMIT}'")
+  }
+}
+
+def gitResetEnvVariables() {
+  // In order to run different test scenarios is required to reset the
+  // env variables that are generated on the fly.
+  env.GIT_BASE_COMMIT=''
+  env.GIT_BUILD_CAUSE=''
+  env.GIT_SHA=''
 }
