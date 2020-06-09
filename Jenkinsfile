@@ -59,7 +59,6 @@ pipeline {
       }
     }
     stage('Checkout scm with extensions') {
-      options { skipDefaultCheckout() }
       steps {
         test(basedir: "${BASE_DIR}", reference: "/var/lib/jenkins/${env.REPO}.git")
       }
