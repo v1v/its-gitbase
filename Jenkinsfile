@@ -65,6 +65,11 @@ pipeline {
       }
     }
   }
+  post {
+    cleanup {
+      notifyBuildResult(prComment: true, shouldNotify: false)
+    }
+  }
 }
 
 def getRealCommit(repo, ref){
