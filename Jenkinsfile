@@ -67,7 +67,7 @@ pipeline {
   }
   post {
     cleanup {
-      notifyBuildResult(prComment: true)
+      notifyBuildResult(prComment: true, shouldNotify: false)
     }
   }
 }
