@@ -39,112 +39,28 @@ pipeline {
     quietPeriod(10)
   }
   stages {
-    stage('Test Full Custom Checkout') {
-      options { skipDefaultCheckout() }
-      steps {
-        test(basedir: "${BASE_DIR}",
-          mergeTarget: "master",
-          branch: "${branch}",
-          repo: "git@github.com:${OWNER}/${env.REPO}.git",
-          credentialsId: "${JOB_GIT_CREDENTIALS}",
-          githubNotifyFirstTimeContributor: false,
-          reference: "/var/lib/jenkins/${env.REPO}.git"
-        )
-      }
-    }
     stage('Checkout scm') {
       options { skipDefaultCheckout() }
       steps {
-        test(basedir: "${BASE_DIR}")
+        script {
+          def testList = ["a", "b", "c", "d"]
+          def branches = [:]
+          for (int i = 0; i < 20 ; i++) {
+            int index=i, branch = i+1
+            stage ("branch_${branch}"){
+              branches["branch_${branch}"] = {
+                withGithubNotify(context: "branch_${branch}") {
+                  sleep randomNumber(min: 5, max: 30)
+                  node ('linux'){
+                    sh "echo 'node: ${NODE_NAME},  index: ${index}, i: ${i}, testListVal: " + testList[index] + "'"
+                  }
+                }
+              }
+            }
+          }
+          parallel branches
+        }
       }
     }
-    stage('Checkout scm with extensions') {
-      options { skipDefaultCheckout() }
-      steps {
-        test(basedir: "${BASE_DIR}", reference: "/var/lib/jenkins/${env.REPO}.git")
-      }
-    }
   }
-}
-
-def getRealCommit(repo, ref){
-  def refReplace = ref.replace("/", ".")
-  def gitCmd = "git ls-remote -q https://\${GIT_USERNAME}:\${GIT_PASSWORD}@github.com/${OWNER}/${repo}.git ${ref}|sed 's/${refReplace}//'"
-  withCredentials([
-    usernamePassword(
-      credentialsId: "2a9602aa-ab9f-4e52-baf3-b71ca88469c7-UserAndToken",
-      passwordVariable: 'GIT_PASSWORD',
-      usernameVariable: 'GIT_USERNAME')
-  ]) {
-    log(level: "INFO", text: "executing: ${gitCmd}")
-    return sh(label: 'Get real commit', script: "${gitCmd}", returnStdout: true).trim()
-  }
-}
-
-def getBranch(){
-  def branch = "${env.BRANCH_NAME}"
-  if(env.CHANGE_ID){
-    branch = "pr/${env.CHANGE_ID}"
-  }
-  if(env.TAG_NAME?.trim()) {
-    branch = "${env.TAG_NAME}"
-  }
-  return branch
-}
-
-def getRef(){
-  def ref = "refs/heads/${env.BRANCH_NAME}"
-  if(env.CHANGE_ID){
-    ref = "refs/pull/${env.CHANGE_ID}/head"
-  }
-  if(env.TAG_NAME?.trim()) {
-    ref = "refs/tags/${env.TAG_NAME}"
-  }
-  return ref
-}
-
-def test(checkoutParams){
-  def branch = getBranch()
-  def ref = getRef()
-  log(level: "INFO", text: "branch: ${branch}")
-  log(level: "INFO", text: "ref: ${ref}")
-
-  deleteDir()
-  ws(branch){
-    String commit = getRealCommit(env.REPO, ref)
-    log(level: "INFO", text: "commit: ${commit}")
-
-    gitResetEnvVariables()
-    gitCheckout(checkoutParams)
-    dir(checkoutParams.basedir) {
-      printDebug()
-    }
-    if (env.TAG_NAME?.trim()) {
-      log(level: 'WARN', text: 'GIT_BASE_COMMIT does not support TAGS')
-      assertGitBaseCommit(env.GIT_SHA)
-    } else {
-      assertGitBaseCommit(commit)
-    }
-  }
-}
-
-def assertGitBaseCommit(commit) {
-  if(env.GIT_BASE_COMMIT.trim().equalsIgnoreCase(commit.trim())){
-    log(level: 'INFO', text: "GIT_BASE_COMMIT value is wrong expected '${commit}' but found '${env.GIT_BASE_COMMIT}'")
-  } else {
-    error("GIT_BASE_COMMIT value is wrong expected '${commit}' but found '${env.GIT_BASE_COMMIT}'")
-  }
-}
-
-def gitResetEnvVariables() {
-  // In order to run different test scenarios is required to reset the 
-  // env variables that are generated on the fly.
-  env.GIT_BASE_COMMIT=''
-  env.GIT_BUILD_CAUSE=''
-  env.GIT_SHA=''
-}
-
-def printDebug() {
-  sh(label: 'Git env variables', script: 'env | sort | grep -i GIT_')
-  sh(label: 'git rev-parse HEAD', script: 'git rev-parse HEAD')
 }
