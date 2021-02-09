@@ -39,26 +39,101 @@ pipeline {
     quietPeriod(10)
   }
   stages {
-    stage('Checkout scm') {
-      options { skipDefaultCheckout() }
+    stage('prepare') {
+      steps {
+        deleteDir()
+        writeYaml(file: 'platforms.yaml', data: readYaml(text: """
+platform: "linux"
+stages:
+  windows:
+    mage:
+      - "mage build unitTest"
+    platforms:
+      - "windows-1"
+      - "windows-a"
+      - "windows-b"
+      - "windows-c"
+      - "windows-d"
+      - "windows-e"
+      - "windows-f"
+      - "windows-g"
+      - "windows-h"
+  linux:
+    mage:
+      - "mage build unitTest"
+    platforms:
+      - "windows-1"
+      - "windows-a"
+      - "windows-b"
+      - "windows-c"
+      - "windows-d"
+      - "windows-e"
+      - "windows-f"
+      - "windows-g"
+      - "windows-h"
+  arm:
+    mage:
+      - "mage build unitTest"
+    platforms:
+      - "windows-1"
+      - "windows-a"
+      - "windows-b"
+      - "windows-c"
+      - "windows-d"
+      - "windows-e"
+      - "windows-f"
+      - "windows-g"
+      - "windows-h"
+  mac:
+    mage:
+      - "mage build unitTest"
+    platforms:
+      - "windows-1"
+      - "windows-a"
+      - "windows-b"
+      - "windows-c"
+      - "windows-d"
+      - "windows-e"
+      - "windows-f"
+      - "windows-g"
+      - "windows-h"
+"""))
+      }
+    }
+    stage('platforms') {
       steps {
         script {
-          def testList = ["a", "b", "c", "d"]
-          def branches = [:]
-          for (int i = 0; i < 20 ; i++) {
-            int index=i, branch = i+1
-            stage ("branch_${branch}"){
-              branches["branch_${branch}"] = {
-                withGithubNotify(context: "branch_${branch}") {
-                  sleep randomNumber(min: 5, max: 30)
-                  node ('linux'){
-                    sh "echo 'node: ${NODE_NAME},  index: ${index}, i: ${i}, testListVal: " + testList[index] + "'"
-                  }
-                }
-              }
-            }
+          def ret = beatsStages(project: 'test', content: readYaml(file: 'platforms.yaml'), function: new RunCommand(steps: this))
+          parallel(ret)
+        }
+      }
+    }
+    stage('foo') {
+      steps {
+        echo 'foo'
+      }
+    }
+  }
+}
+
+class RunCommand extends co.elastic.beats.BeatsFunction {
+  public RunCommand(Map args = [:]){
+    super(args)
+  }
+  public run(Map args = [:]){
+    if (args?.content?.mage) {
+      steps.node('linux') {
+        withGithubNotify(context: "${args.context}") {
+          steps.dir(args.project) {
+            steps.echo "mage ${args.label}"
           }
-          parallel branches
+        }
+      }
+    }
+    if (args?.content?.make) {
+      steps.node('linux') { 
+        withGithubNotify(context: "${args.context}") {   
+          steps.echo "make ${args.label}"
         }
       }
     }
