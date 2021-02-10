@@ -123,7 +123,7 @@ class RunCommand extends co.elastic.beats.BeatsFunction {
   public run(Map args = [:]){
     if (args?.content?.mage) {
       steps.node('linux') {
-        withGithubNotify(context: "${args.context}") {
+        steps.withGithubNotify(context: "${args.context}") {
           steps.dir(args.project) {
             steps.echo "mage ${args.label}"
           }
@@ -132,7 +132,7 @@ class RunCommand extends co.elastic.beats.BeatsFunction {
     }
     if (args?.content?.make) {
       steps.node('linux') { 
-        withGithubNotify(context: "${args.context}") {   
+        steps.withGithubNotify(context: "${args.context}") {
           steps.echo "make ${args.label}"
         }
       }
